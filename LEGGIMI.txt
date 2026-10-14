@@ -1,0 +1,106 @@
+AVV. GINO BELLEMO — SITO PERSONALE v0013
+
+CONTENUTO
+- index.html: Home
+- profilo.html: presentazione, rapporto con il cliente e indipendenza
+- settori.html: indice degli ambiti di attività
+- sinistri-stradali.html: sinistri, incidenti mortali, procedimenti penali
+- infortuni-lavoro.html: infortuni dei lavoratori e danni delle imprese
+- responsabilita-sanitaria.html: sanitaria e professioni intellettuali
+- responsabilita-civile.html: altre responsabilità civili
+- controversie-assicurative.html: assicurazioni
+- metodo.html: le sei fasi del metodo
+- contatti.html: proposta di contatto e territorio operativo
+- style.css / script.js: grafica, responsive e menu mobile
+
+APERTURA IN LOCALE
+1. Estrai lo ZIP in una cartella dedicata.
+2. Apri la cartella con Visual Studio Code.
+3. Apri index.html con Live Server (opzione consigliata).
+4. La cartella .vscode imposta Live Server sulla porta 5501. Questo consente
+   di affiancare un altro progetto che utilizza la porta standard 5500.
+5. Il sito funziona anche aprendo index.html direttamente nel browser.
+
+NOTA REDAZIONALE
+La bozza mantiene i testi forniti senza correzioni di parole, anche nei punti che
+presentano apparenti refusi. Alcuni passaggi sono ripetuti come anteprima nella Home.
+Gli eventuali nuovi testi dell'interfaccia sono soltanto etichette di navigazione.
+
+PRIMA DELLA PUBBLICAZIONE
+- Recapiti inseriti come comunicati; verificare che siano corretti prima della pubblicazione.
+- Completare le informazioni professionali e privacy/cookie eventualmente richieste.
+- I riferimenti alla bozza e i promemoria redazionali sono già stati eliminati dal piè di pagina.
+- Sottoporre i contenuti all'approvazione dell'avv. Bellemo.
+
+La bozza non contiene foto o loghi, né script esterni. La versione 0010
+carica da Google Fonts il solo carattere Source Serif 4 per la numerazione 01–06;
+per mostrarlo è necessaria una connessione Internet. In assenza di connessione
+il sito funziona comunque, usando il carattere di riserva. Prima della
+pubblicazione verificare gli aspetti privacy del caricamento da terzi.
+
+Versione 0003: firma grafica condivisa nelle pagine; testi nei riquadri ingranditi; introduttivi duplicati eliminati nei cinque ambiti; spunte nel metodo Home.
+
+Versione 0004 (13/10/2026)
+- Geometria dell’intestazione interna unificata: lineetta sottile e dicitura IN ATTIVITÀ DAL 2001 ancorate alla stessa quota su tutte le pagine.
+- Immagine-firma ferma alla stessa posizione e dimensione su desktop/tablet, indipendentemente dalla lunghezza del titolo e del testo.
+- Titolo I SETTORI NEI QUALI OPERO su un’unica riga su desktop; mobile invariato.
+- Nessun testo professionale alterato.
+
+Versione 0005 (13/10/2026)
+- Lineetta molto sottile, condivisa tra Home e pagine interne; dicitura in attività dal 2001 alla medesima quota visiva per ogni fascia di schermo.
+- Titoli principali delle pagine interne in forma normale, con iniziali maiuscole; nel Profilo «Avv. Gino Bellemo».
+- Immagine-firma ingrandita su desktop fino al doppio, mantenendo inalterate quota superiore e bordo destro.
+- Recapiti comunicati dal professionista inseriti nella pagina Contatti, con numero e indirizzi cliccabili; informazioni essenziali nel footer.
+- Orari riferiti esclusivamente alla ricezione delle telefonate, non all'apertura fisica dello studio.
+- Nessuna modifica ai paragrafi professionali.
+
+Versione 0006 (13/10/2026)
+- Tutti e cinque i riquadri della Home mostrano per intero il primo capoverso, senza troncamenti; dimensione caratteri invariata.
+- Metodo: uniti i primi due capoversi senza cambiare parole; eliminata la seconda linea sopra la prima fase e avvicinato il primo blocco alla linea lunga.
+- Grafica-firma: eliminate le unità di misura dipendenti dal contenitore (cqw), sostituite da proporzioni calcolate su una misura condivisa e immediatamente determinata. Geometria e aspetto finale invariati.
+
+Versione 0007 (13/10/2026)
+- Nella firma, GINO BELLEMO arretrato di 1 px verso sinistra; asset grafico invariato.
+- Metodo: tre capoversi introduttivi unificati, parole inalterate.
+- Titoli in maiuscolo integrale convertiti alla normale grafia con sola iniziale maiuscola; microetichette e marchi grafici invariati.
+- Numeri delle sei fasi Metodo riallineati verticalmente senza alterarne carattere e dimensione.
+- Recapiti telefonici espressi nel formato internazionale +39 in tutte le pagine, mantenendo i collegamenti tel: corretti.
+
+Versione 0008 (13/10/2026)
+- Home: ingranditi i sei titoli delle fasi del metodo e centrati verticalmente rispetto a numero e spunta.
+- Eliminati «Esplora il sito» dalla Home e «Torna su» da tutte le pagine, preservando la linea e il footer.
+- Allineata, ove lo spazio disponibile lo consente, la quota della linea inferiore della pagina Metodo a quella della pagina Ambiti di attività; sui formati più stretti prevale la leggibilità dei testi.
+- Rimossi i grassetti interni ai testi descrittivi (non i titoli o le voci di navigazione).
+- Metodo: numerazione 01–06 con cifre di altezza omogenea e margine superiore allineato ai rispettivi titoli.
+- Lineetta iniziale «IN ATTIVITÀ DAL 2001» portata allo spessore della sottolineatura del menu.
+- Rimosse dal footer le diciture provvisorie sulla bozza, il numero versione e la privacy.
+- Nessun paragrafo professionale riscritto o abbreviato.
+
+Versione 0009 (13/10/2026)
+- Numerazioni 01–06 in Georgia come nella versione 0007 mobile, condivise fra pagina Metodo e lista Home, su desktop e mobile; grandezze responsive preesistenti.
+- Riga inferiore del blocco di apertura del Metodo allineata esattamente alla pagina Settori da 950 px in su, con altezza parametrica comune e senza vecchie compensazioni per singoli intervalli di larghezza. Sotto 950 px la disposizione resta dinamica per contenere il testo senza sovrapposizioni.
+- Lineetta di IN ATTIVITÀ DAL 2001 con medesimi spessore e colore della sottolineatura del menu.
+- Voce di menu «Settori» in tutte le dieci pagine, collegamento immutato.
+- Contenuti professionali e altri elementi non modificati.
+
+Versione 0010 (14/10/2026)
+- Fonte numerica 01–06 Source Serif 4, via Google Fonts, in Home e Metodo, desktop/mobile.
+- Allineamento ottico superiore dei numeri Metodo su desktop; mobile non spostato.
+- Titoli degli approfondimenti Infortuni e Responsabilita civile con a-capo prestabiliti.
+- Titolo principale Metodo distribuito su tre righe prestabilite.
+- Citazione Home: virgolette di apertura e chiusura direttamente prima e dopo il testo, nel colore precedente.
+- Cinque riquadri Home: collegamento sintetizzato in «Approfondisci», allineato a destra prima della freccia.
+- Tutte le altre parti della 0009 preservate.
+
+Versione 0011 (14/10/2026)
+- Semplificata anche nella pagina Settori l'etichetta dei cinque collegamenti in «Approfondisci», come già nella Home.
+
+Versione 0012 (14/10/2026)
+- Dicitura «IN ATTIVITÀ DAL 2001» e relativa lineetta traslate di 2 px verso destra nelle pagine interne.
+
+Versione 0013 (14/10/2026)
+- Suddivisione in righe coerente dei cinque titoli tra Home, pagina Settori e rispettive pagine di approfondimento; congiunzione «e» all'inizio della seconda riga.
+- Allineamento orizzontale della dicitura «IN ATTIVITÀ DAL 2001» nella Home alle pagine interne (ulteriori 2 px a destra).
+- Nei cinque approfondimenti rimossi kicker «/ ESPLORA» e titolo sostituito con «Altri settori», con recupero dello spazio sopra al titolo.
+- Nel Metodo spazio superiore della prima fase 01 uniformato a quello delle fasi successive, inclusa la visualizzazione mobile.
+- Testi professionali e collegamenti invariati.
