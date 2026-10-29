@@ -407,6 +407,16 @@
     window.matchMedia('(max-width:820px) and (pointer:coarse)').matches;
   let drag = null, dragAnimating = false;
   const gestureEdge = 28;
+  /* BELLEMO 0087 — profilo touch a sensibilita' elevata: valori di
+     progetto, NON parametri ufficiali di X/Twitter o TikTok (non pubblici).
+     Prima separiamo intenzione orizzontale da scroll verticale; poi
+     riconosciamo flick brevi o trascinamenti decisi. Geometria e transizione
+     delle sei pagine restano esattamente quelle della versione 0086. */
+  const swipeStartPx = 5;
+  const swipeCommitRatio = .14;
+  const swipeFlickMinPx = 18;
+  const swipeFlickVelocity = .24;
+  const swipeReadyWaitMs = 700;
   function sectorNeighbor(dx) {
     const filename = location.pathname.split('/').pop();
     const index = sectorSequence.indexOf(filename);
@@ -586,11 +596,13 @@
       const serial=++state.serial;
       const target=state.url;
       if (!target) return;
-      getDocument(target).then(page=>prepareImages(page).then(()=>page)).then(page=>{
-        if (drag!==state || state.aborted || serial!==state.serial) return;
-        state.page=page;
-        if (state.axis==='horizontal') createDragStage(state,page,serial);
-      }).catch(()=>{});
+      state.preparation=getDocument(target)
+        .then(page=>prepareImages(page).then(()=>page))
+        .then(page=>{
+          if (drag!==state || state.aborted || serial!==state.serial) return;
+          state.page=page;
+          if (state.axis==='horizontal') return createDragStage(state,page,serial);
+        }).catch(()=>{});
       return;
     }
     if (state.stage) state.track.style.transform = `translate3d(${dx}px,0,0)`;
@@ -605,22 +617,24 @@
     const t=event.touches[0];
     if (t.clientX<gestureEdge || t.clientX>innerWidth-gestureEdge) return;
     if (!sectorNeighbor(-1)) return;
+    const startedAt=performance.now();
     drag={id:t.identifier,x:t.clientX,y:t.clientY,dx:0,axis:'pending',
-      startedAt:performance.now(),lastX:t.clientX,lastAt:performance.now(),
+      startedAt,lastX:t.clientX,lastAt:startedAt,
+      samples:[{x:t.clientX,t:startedAt}],ended:false,preparation:null,
       velocity:0,direction:0,ready:false,stage:null,pendingStage:null,serial:0,aborted:false};
   },{passive:true});
 
   document.addEventListener('touchmove', event => {
     const state=drag;
-    if (!state || state.aborted || !mobileDragEnabled()) return;
+    if (!state || state.aborted || state.ended || !mobileDragEnabled()) return;
     if (event.touches.length!==1) {state.aborted=true;cleanDrag(state);return;}
     const touch=Array.from(event.touches).find(t=>t.identifier===state.id);
     if (!touch) return;
     const dx=touch.clientX-state.x,dy=touch.clientY-state.y;
     if (state.axis==='pending') {
-      if (Math.max(Math.abs(dx),Math.abs(dy))<9) return;
-      if (Math.abs(dy)>Math.abs(dx)*0.8) {state.axis='vertical';return;}
-      if (Math.abs(dx)<Math.abs(dy)*1.3) return;
+      if (Math.max(Math.abs(dx),Math.abs(dy))<swipeStartPx) return;
+      if (Math.abs(dy)>Math.abs(dx)*1.15) {state.axis='vertical';return;}
+      if (Math.abs(dx)<Math.abs(dy)*1.15) return;
       state.axis='horizontal';
     }
     if (state.axis!=='horizontal') return;
@@ -628,6 +642,9 @@
     const now=performance.now(),dt=now-state.lastAt;
     if (dt>0) state.velocity=(touch.clientX-state.lastX)/dt;
     state.lastX=touch.clientX;state.lastAt=now;
+    state.samples.push({x:touch.clientX,t:now});
+    while (state.samples.length>2 && state.samples[1].t<now-125)
+      state.samples.shift();
     moveDrag(dx);
   },{passive:false});
 
@@ -647,21 +664,62 @@
     if (!state || event.touches.length) return;
     const touch=Array.from(event.changedTouches).find(t=>t.identifier===state.id);
     if (!touch) return;
-    drag=null;
-    if (state.axis!=='horizontal' || !state.stage || !state.ready) {
+    if (state.ended) return;
+    state.ended=true;
+    // BELLEMO 0087 — gesto molto rapido: alcuni browser inviano il touchend
+    // prima di qualsiasi touchmove oltre il piccolo slop iniziale. In quel
+    // caso riconosciamo la direzione sul punto finale, SOLO se orizzontale;
+    // non intercettiamo tocchi fermi, scroll verticali o gesti diagonali.
+    const finalDx=touch.clientX-state.x;
+    const finalDy=touch.clientY-state.y;
+    if (state.axis==='pending' && Math.abs(finalDx)>=swipeStartPx &&
+        Math.abs(finalDx)>=Math.abs(finalDy)*1.15) {
+      state.axis='horizontal';
+    }
+    if (state.axis!=='horizontal') {cleanDrag(state);return;}
+    // Il punto di rilascio decide il segno effettivo anche quando l'ultimo
+    // movimento non e' stato inviato come touchmove. Questo gestisce anche
+    // una rapida inversione del dito evitando di aprire l'area sbagliata.
+    state.dx=finalDx;
+    if (state.dx && state.direction !== (state.dx<0 ? 1 : -1))
+      moveDrag(state.dx);
+    const now=performance.now();
+    const samples=state.samples.filter(point=>point.t>=now-130);
+    const first=samples[0] || {x:state.x,t:state.startedAt};
+    const elapsed=Math.max(1,now-first.t);
+    const velocity=(touch.clientX-first.x)/elapsed;
+    const w=document.documentElement.clientWidth;
+    const committed=Math.abs(state.dx)>=w*swipeCommitRatio ||
+      (Math.abs(state.dx)>=swipeFlickMinPx &&
+       Math.abs(velocity)>=swipeFlickVelocity &&
+       Math.sign(velocity)===Math.sign(state.dx));
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!committed) {
+      drag=null;
+      if (state.stage) await animateDrag(state,0,reduce?0:210);
       cleanDrag(state);return;
     }
     dragAnimating=true;
-    const w=state.width;
-    const committed=Math.abs(state.dx)>=w*.35 ||
-      (Math.abs(state.dx)>=42 && Math.abs(state.velocity)>=.55 &&
-       Math.sign(state.velocity)===Math.sign(state.dx));
-    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!committed) {
-      await animateDrag(state,0,reduce?0:210);
-      cleanDrag(state);return;
+    // Il dito puo' essere rilasciato PRIMA delle due rAF necessarie a
+    // comporre le fotografie. Manteniamo lo stato fino alla fine del gate.
+    if (!state.ready && state.preparation) {
+      await Promise.race([
+        state.preparation,
+        new Promise(resolve=>setTimeout(resolve,swipeReadyWaitMs))
+      ]);
     }
-    await animateDrag(state,-state.direction*w,reduce?0:230);
+    if (state.aborted) {cleanDrag(state);return;}
+    if (!state.stage || !state.ready) {
+      // Su rete molto lenta non perdere lo swipe e non mostrare foto vuote.
+      const target=state.url;
+      cleanDrag(state);
+      if (target) await navigate(target);
+      return;
+    }
+    // Il gesto completato e' indipendente da ulteriori touchmove.
+    drag=null;
+    state.track.style.transform=`translate3d(${state.dx}px,0,0)`;
+    await animateDrag(state,-state.direction*state.width,reduce?0:230);
     if (state.url) {
       const switched = await navigate(state.url);
       if (!switched) { cleanDrag(state); return; }
