@@ -390,6 +390,8 @@
     // ordinario di pagina. Il trascinamento 0065 gestisce la transizione
     // completa prima della sostituzione del MAIN.
     warmAllSectors();
+    // BELLEMO 0088 — aggiorna la cache dei due vicini del circuito principale.
+    warmPrimaryNeighbors();
     return true;
   }
 
@@ -757,6 +759,136 @@
     if (drag) {drag.aborted=true;cleanDrag(drag);}
   },{passive:true});
   window.addEventListener('resize',()=>{if(drag) cleanDrag(drag);});
+
+  /* BELLEMO 0089 — SWIPE CIRCOLARE SU TUTTA L'ALTEZZA DELLE 11 PAGINE.
+     Il circuito principale 0088 resta invariato; il circuito dei sei settori
+     opera anche su MAIN e FOOTER dopo lo scorrimento verticale. Sulle foto
+     panoramiche resta ESCLUSIVAMENTE il trascinamento animato 0087, con i
+     suoi gestori, limiti e centrature fotografici integralmente invariati.
+     Su tutti gli altri contenuti vale il gesto piu' prudente della 0088:
+     link e pulsanti esclusi, prevalenza orizzontale, bordi Android liberi.
+     Nessuna nuova animazione: la pagina e' cambiata dal router 0057. */
+  const primarySequence = [
+    'index.html', 'profilo.html', 'settori.html', 'metodo.html', 'contatti.html'
+  ];
+  let primaryTouch = null;
+  let primaryNavigating = false;
+  const primaryDirectionRatio = 1.35;
+
+  function primaryPageName() {
+    return location.pathname.split('/').pop() || 'index.html';
+  }
+  function pageWideNeighbor(dx) {
+    const filename=primaryPageName();
+    // Il circuito specialistico resta indipendente da quello principale.
+    if (sectorSequence.includes(filename)) return sectorNeighbor(dx);
+    const index=primarySequence.indexOf(filename);
+    if (index < 0) return null;
+    const step=dx < 0 ? 1 : -1;
+    return internalPage(primarySequence[(index+step+primarySequence.length)%primarySequence.length]);
+  }
+  // HTML dei soli due vicini: nessun download delle grandi panoramiche e
+  // nessuna interferenza con il pre-caricamento delle sei aree fotografiche.
+  function warmPrimaryNeighbors() {
+    if (!mobileDragEnabled()) return;
+    const i=primarySequence.indexOf(primaryPageName());
+    if (i < 0) return;
+    for (const k of [(i+1)%primarySequence.length,
+                     (i-1+primarySequence.length)%primarySequence.length]) {
+      const url=internalPage(primarySequence[k]);
+      if (url) getDocument(url).catch(()=>{});
+    }
+  }
+  warmPrimaryNeighbors();
+
+  function clearPrimaryTouch() { primaryTouch=null; }
+  document.addEventListener('touchstart',event=>{
+    // Un secondo dito interrompe subito la selezione del gesto precedente.
+    if (event.touches.length!==1) {clearPrimaryTouch();return;}
+    if (!mobileDragEnabled() || dragAnimating || primaryNavigating || drag ||
+        (!primarySequence.includes(primaryPageName()) &&
+         !sectorSequence.includes(primaryPageName())))
+      return;
+    const target=event.target;
+    if (!(target instanceof Element) ||
+        !target.closest('body > main#contenuto, body > footer.site-footer') ||
+        // Non duplicare MAI lo swipe fotografico con trascinamento 0087.
+        (sectorSequence.includes(primaryPageName()) &&
+         target.closest('.sector-detail .sector-banner')) ||
+        target.closest('a,button,input,select,textarea,option,label,summary,iframe,video,audio,[contenteditable],[role="button"],[role="link"],.bellemo-swipe-stage') ||
+        document.querySelector('.nav-links.open') ||
+        (window.getSelection() && !window.getSelection().isCollapsed)) return;
+    const t=event.touches[0];
+    // Le zone laterali di Android rimangono riservate al gesto Indietro.
+    if (t.clientX<gestureEdge || t.clientX>innerWidth-gestureEdge) return;
+    const now=performance.now();
+    primaryTouch={id:t.identifier,x:t.clientX,y:t.clientY,
+      axis:'pending',startedAt:now,scrollY:window.scrollY,
+      samples:[{x:t.clientX,t:now}]};
+  },{passive:true});
+
+  document.addEventListener('touchmove',event=>{
+    const state=primaryTouch;
+    if (!state) return;
+    if (event.touches.length!==1 || !mobileDragEnabled() ||
+        Math.abs(window.scrollY-state.scrollY)>4) {clearPrimaryTouch();return;}
+    const t=Array.from(event.touches).find(item=>item.identifier===state.id);
+    if (!t) return;
+    const dx=t.clientX-state.x,dy=t.clientY-state.y;
+    if (state.axis==='pending') {
+      if (Math.max(Math.abs(dx),Math.abs(dy))<swipeStartPx) return;
+      if (Math.abs(dy)>Math.abs(dx)*1.15) {
+        state.axis='vertical';return;
+      }
+      if (Math.abs(dx)<Math.abs(dy)*primaryDirectionRatio) return;
+      state.axis='horizontal';
+    }
+    if (state.axis!=='horizontal') return;
+    // Solo dopo aver riconosciuto l'intenzione orizzontale impediamo il
+    // movimento verticale. Lo scroll normale resta sempre disponibile.
+    if (event.cancelable) event.preventDefault();
+    const now=performance.now();
+    state.samples.push({x:t.clientX,t:now});
+    while (state.samples.length>2 && state.samples[1].t<now-125)
+      state.samples.shift();
+    // Carica il documento da aprire mentre il dito e' ancora sullo schermo.
+    const neighbor=pageWideNeighbor(dx);
+    if (neighbor) getDocument(neighbor).catch(()=>{});
+  },{passive:false});
+
+  document.addEventListener('touchend',event=>{
+    const state=primaryTouch;
+    if (!state || event.touches.length) return;
+    const t=Array.from(event.changedTouches).find(item=>item.identifier===state.id);
+    clearPrimaryTouch();
+    if (!t || !mobileDragEnabled() || primaryNavigating ||
+        Math.abs(window.scrollY-state.scrollY)>4 || state.axis==='vertical') return;
+    const dx=t.clientX-state.x,dy=t.clientY-state.y;
+    if (Math.abs(dx)<swipeStartPx ||
+        Math.abs(dx)<Math.abs(dy)*primaryDirectionRatio) return;
+    // Riconosce anche il flick in cui il browser emette touchend prima di
+    // avere inviato un touchmove qualificante, come nella 0087.
+    const now=performance.now();
+    const samples=state.samples.filter(point=>point.t>=now-130);
+    const first=samples[0] || {x:state.x,t:state.startedAt};
+    const velocity=(t.clientX-first.x)/Math.max(1,now-first.t);
+    const committed=Math.abs(dx)>=document.documentElement.clientWidth*swipeCommitRatio ||
+      (Math.abs(dx)>=swipeFlickMinPx &&
+       Math.abs(velocity)>=swipeFlickVelocity &&
+       Math.sign(velocity)===Math.sign(dx));
+    if (!committed) return;
+    const destination=pageWideNeighbor(dx);
+    if (!destination) return;
+    primaryNavigating=true;
+    // Lo scroll torna all'inizio della pagina nuova; il vecchio scroll
+    // resta nella cronologia per l'eventuale comando Indietro del browser.
+    Promise.resolve(navigate(destination)).catch(error=>{
+      console.error('Navigazione gestuale Bellemo:',error);
+    }).finally(()=>{primaryNavigating=false;});
+  },{passive:true});
+
+  document.addEventListener('touchcancel',clearPrimaryTouch,{passive:true});
+  window.addEventListener('resize',clearPrimaryTouch);
 
   document.addEventListener('click', event => {
     if (event.defaultPrevented || event.button !== 0 ||
