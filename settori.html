@@ -4,6 +4,53 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
+<!-- BELLEMO 0094: primo disegno coordinato tra testata e sfondo. -->
+<link rel="preload" as="image" href="assets/bellemo-sfondo-geometrico-0049.webp" fetchpriority="high"/>
+<style id="bellemo-0094-firstpaint-style">
+html.bellemo-initial-loading{background:#f8f7f3!important}
+html.bellemo-initial-loading body{visibility:hidden!important}
+</style>
+<script id="bellemo-0094-firstpaint-script">
+(function(){
+  'use strict';
+  var root=document.documentElement;
+  root.classList.add('bellemo-initial-loading');
+  var domReady=document.readyState!=='loading';
+  var imageReady=false;
+  var limitReached=false;
+  var released=false;
+  function revealWhenReady(){
+    if(released || !domReady || (!imageReady && !limitReached)) return;
+    released=true;
+    // Il browser esegue un unico ridisegno: testata + pagina + fondale.
+    root.classList.remove('bellemo-initial-loading');
+  }
+  function imageSettled(){imageReady=true;revealWhenReady();}
+  if(!domReady){
+    document.addEventListener('DOMContentLoaded',function(){
+      domReady=true;
+      revealWhenReady();
+    },{once:true});
+  }
+  var image=new Image();
+  image.decoding='async';
+  image.src='assets/bellemo-sfondo-geometrico-0049.webp';
+  if(typeof image.decode==='function'){
+    image.decode().then(imageSettled,imageSettled);
+  }else if(image.complete){
+    imageSettled();
+  }else{
+    image.addEventListener('load',imageSettled,{once:true});
+    image.addEventListener('error',imageSettled,{once:true});
+  }
+  // Su collegamenti molto lenti non bloccare la consultazione indefinitamente.
+  window.setTimeout(function(){limitReached=true;revealWhenReady();},2600);
+  // Al ritorno dalla cache di navigazione, evitare di ripresentare lo schermo vuoto.
+  window.addEventListener('pageshow',function(event){
+    if(event.persisted){limitReached=true;domReady=true;revealWhenReady();}
+  });
+})();
+</script>
 <meta content="light" name="color-scheme"/>
 <meta content="#273830" name="theme-color"/>
 <link rel="icon" href="/favicon.png" type="image/png" sizes="192x192"/>
@@ -31,7 +78,6 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400&amp;display=swap" rel="stylesheet"/>
-<link rel="preload" as="image" href="assets/bellemo-sfondo-geometrico-0049.webp"/>
 <style id="bellemo-critical-bg">
 :root{--bellemo-header-height:94px;--bellemo-bg-top-height:clamp(620px,55vw,1020px);--bellemo-paper:#f8f7f3;}
 @media(max-width:820px){:root{--bellemo-header-height:75px;--bellemo-bg-top-height:clamp(600px,125vw,930px);}}
